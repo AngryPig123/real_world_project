@@ -3,7 +3,9 @@ package project1;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Month;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * packageName    : project1
@@ -25,8 +27,29 @@ public class BankStatementProcessor {
         this.bankTransactions = bankTransactions;
     }
 
+    private List<BankTransaction> findTransactions(final BankTransactionFilter bankTransactionFilter) {
+        return bankTransactions.stream()
+                .filter(bankTransactionFilter::test)
+                .collect(Collectors.toList());
+    }
+
     public static BankStatementProcessor of(List<BankTransaction> bankTransactions) {
         return new BankStatementProcessor(bankTransactions);
+    }
+
+    @FunctionalInterface
+    public interface BankTransactionSummarizer {
+        double summarize(double accumulator, BankTransaction bankTransaction);
+    }
+
+    @FunctionalInterface
+    public interface BankTransactionFilter {
+        boolean test(BankTransaction bankTransaction);
+    }
+
+    public double summarizeTransactions(final BankTransactionSummarizer bankTransactionSummarizer) {
+        return bankTransactions.stream()
+                .reduce(0.0, bankTransactionSummarizer::summarize, Double::sum);
     }
 
     public double calculateTotalAmount() {
@@ -36,17 +59,25 @@ public class BankStatementProcessor {
     }
 
     public double calculateTotalInMonth(final Month month) {
-        return this.bankTransactions.stream()
-                .filter(item -> item.getDate().getMonth() == month)
-                .mapToDouble(BankTransaction::getAmount)
-                .sum();
+        return summarizeTransactions(
+                (acc, bankTransaction) ->
+                        bankTransaction.getDate().getMonth() == month
+                                ? acc + bankTransaction.getAmount()
+                                : acc
+        );
     }
 
     public double calculateTotalForCategory(final String category) {
-        return this.bankTransactions.stream()
-                .filter(item -> category.equals(item.getDescription()))
-                .mapToDouble(BankTransaction::getAmount)
-                .sum();
+        return summarizeTransactions(
+                (acc, bankTransaction) ->
+                        category.equals(bankTransaction.getDescription())
+                                ? acc + bankTransaction.getAmount()
+                                : acc
+        );
+    }
+
+    public List<BankTransaction> findTransactionsGreaterThanEqual(final int amount) {
+        return findTransactions(bankTransaction -> bankTransaction.getAmount() > amount);
     }
 
 }
