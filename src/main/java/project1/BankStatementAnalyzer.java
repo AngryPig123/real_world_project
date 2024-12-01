@@ -10,37 +10,33 @@ import java.time.Month;
 import java.util.List;
 
 /**
- * @author shguddnr2@coremethod.co.kr
- * @version 1.0
- * @description
- * @since 24. 11. 28.
+ * packageName    : project1
+ * fileName       : Client
+ * author         : AngryPig123
+ * date           : 24. 12. 1.
+ * description    :
+ * ===========================================================
+ * DATE              AUTHOR             NOTE
+ * -----------------------------------------------------------
+ * 24. 12. 1.        AngryPig123       최초 생성
  */
 @Slf4j
 public class BankStatementAnalyzer {
 
-    private static final String RESOURCES = "src/main/resources/";
+    private static final String RESOURCES = "./src/main/resources/";
 
-    public static void main(String[] args) throws IOException {
-
-        BankStatementCSVParser bankStatementCSVParser = new BankStatementCSVParser();
-
-        Path path = Paths.get(RESOURCES + args[0]);
-        List<String> lines = Files.readAllLines(path);
-        List<BankTransaction> bankTransactions = bankStatementCSVParser.parseLinesFromCSV(lines);
-
-        log.info("total price = {}", calculateTotalAmount(bankTransactions));
-        log.info("select in month = {}", selectInMonth(bankTransactions, Month.FEBRUARY));
-
+    public void analyze(final String fileName, final BankStatementParser bankStatementParser) throws IOException {
+        final Path path = Paths.get(RESOURCES + fileName);
+        final List<String> lines = Files.readAllLines(path);
+        List<BankTransaction> bankTransactions = bankStatementParser.parseLineFromCSV(lines);
+        BankStatementProcessor bankStatementProcessor = BankStatementProcessor.of(bankTransactions);
+        collectSummary(bankStatementProcessor);
     }
 
-    private static double calculateTotalAmount(final List<BankTransaction> bankTransactions) {
-        return bankTransactions.stream()
-                .mapToDouble(BankTransaction::getAmount)
-                .sum();
-    }
-
-    private static List<BankTransaction> selectInMonth(final List<BankTransaction> bankTransactions, final Month month) {
-        return bankTransactions.stream().filter(transaction -> transaction.getDate().getMonth() == month).toList();
+    private static void collectSummary(BankStatementProcessor bankStatementProcessor) {
+        log.info("total amount = {}", bankStatementProcessor.calculateTotalAmount());
+        log.info("total in month amount = {}", bankStatementProcessor.calculateTotalInMonth(Month.AUGUST));
+        log.info("total int category amount = {}", bankStatementProcessor.calculateTotalForCategory("Food"));
     }
 
 }

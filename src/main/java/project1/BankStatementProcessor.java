@@ -1,14 +1,52 @@
 package project1;
 
+import lombok.extern.slf4j.Slf4j;
+
+import java.time.Month;
+import java.util.List;
+
 /**
+ * packageName    : project1
+ * fileName       : BankStatementProcessor
+ * author         : AngryPig123
+ * date           : 24. 12. 1.
+ * description    :
+ * ===========================================================
+ * DATE              AUTHOR             NOTE
+ * -----------------------------------------------------------
+ * 24. 12. 1.        AngryPig123       최초 생성
+ */
+@Slf4j
+public class BankStatementProcessor {
 
-@author shguddnr2@coremethod.co.kr
+    private final List<BankTransaction> bankTransactions;
 
-@version 1.0
+    private BankStatementProcessor(List<BankTransaction> bankTransactions) {
+        this.bankTransactions = bankTransactions;
+    }
 
-@description
+    public static BankStatementProcessor of(List<BankTransaction> bankTransactions) {
+        return new BankStatementProcessor(bankTransactions);
+    }
 
-@since 24. 11. 28.
+    public double calculateTotalAmount() {
+        return this.bankTransactions.stream()
+                .mapToDouble(BankTransaction::getAmount)
+                .sum();
+    }
 
- */public class BankStatementProcessor {
+    public double calculateTotalInMonth(final Month month) {
+        return this.bankTransactions.stream()
+                .filter(item -> item.getDate().getMonth() == month)
+                .mapToDouble(BankTransaction::getAmount)
+                .sum();
+    }
+
+    public double calculateTotalForCategory(final String category) {
+        return this.bankTransactions.stream()
+                .filter(item -> category.equals(item.getDescription()))
+                .mapToDouble(BankTransaction::getAmount)
+                .sum();
+    }
+
 }
